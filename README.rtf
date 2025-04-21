@@ -1,0 +1,94 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2511
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww28800\viewh16580\viewkind1
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qc\partightenfactor0
+
+\f0\fs24 \cf0 Redes neuronales\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qj\partightenfactor0
+\cf0 	Una  red neuronal es un conjunto de algoritmos y objetos qu\'e9 se puede usar para identificar relaciones entre variables de un set de datos. Una vez que esta red tiene identificadas de manera adecuada estas relaciones se puede usar para estudiar o predecir el resultado de otros sets de datos, de un mismo tipo.\
+	La estructura del tipo de red con el que se trabaj\'f3 para este programa es la siguiente. Las neuronas de una dada capa estar\'e1 conectadas con todas las de la capa siguiente y anterior. Se adjunta una ilustraci\'f3n de esto.\
+	Una \'93neurona\'94 aqu\'ed es una variable que guardar\'e1 informaci\'f3n, en nuestro caso, un n\'famero de punto flotante. Cada neurona tiene \'93inputs\'94 que pueden ser datos externos o el output de otras neuronas. El output de la \'faltima capa de neuronas es el resultado final de la red. En nuestro caso un \'fanico n\'famero entre 0 y 1 que representar\'e1 la fracci\'f3n de votos obtenida por un candidato.\
+	Para conocer la activaci\'f3n de una neurona de una dada capa se hace la suma pesada  de los outputs de todas las de la capa anterior y se le agrega el bias de la propia neurona. Luego esta activaci\'f3n alimenta una funci\'f3n de activaci\'f3n, qu\'e9 es lo que da el output de la neurona. En nuestro caso, se trabaj\'f3 con neuronas cuya funci\'f3n de activaci\'f3n era la sigmoide.\
+\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qc\partightenfactor0
+\cf0 Algoritmo Gen\'e9tico\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qj\partightenfactor0
+\cf0 	El algoritmo gen\'e9tico es el m\'e9todo utilizado para entrenar a la red neuronal sobre el set de datos.\
+	Este m\'e9todo consiste en crear \'93N\'94 (la poblaci\'f3n) redes neuronales con sus par\'e1metros (pesos y biases) inicializados al azar. Se calcula la funci\'f3n costo de todas las redes de la poblaci\'f3n sobre el set de datos de entrenamiento, Una vez hecho esto se elige a las dos redes neuronales con el menor costo como \'93padres\'94.\
+	Se crea una nueva generaci\'f3n de N redes  de la siguiente manera:\
+	- para settear un dado peso o bias se elige el padre del que se lo hereda con 	   una probabilidad de 50%.\
+	- con una probabilidad baja (en nuestro caso 0.1%) dicho peso o bias se 	   cambia por un valor al azar\
+	El proceso enunciado en los dos p\'e1rrafos anteriores se repite hasta que se llegue a un n\'famero m\'e1ximo de iteraciones o se llegue a un costo que se haya juzgado suficientemente bajo. Estos valores de corte se definen en tiempo de compilaci\'f3n y en nuestro caso son 20.000 iteraciones y 0.012 para la funci\'f3n costo (que por como es la base de datos equivale a un error medio de 3 puntos en la estimaci\'f3n de los porcentajes de cada candidato).\
+	Como resultado se obtiene una red neuronal que puede incorporar los datos de la econom\'eda y otras variables del candidato adem\'e1s de su promedio en encuestas. Esto permite obtener una mejor estimaci\'f3n de cu\'e1l ser\'eda el resultado de una elecci\'f3n que si solo se considerara su promedio en la encuestas.\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qc\partightenfactor0
+\cf0 Uso del programa\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qj\partightenfactor0
+\cf0 	El programa tiene como objetivo predecir los porcentajes obtenidos por un grupo de candidatos que compitan en una misma elecci\'f3n en base a su promedio en las encuestas y el estado de la econom\'eda del pa\'eds.\
+	Al ejecutarse el programa el usuario tiene dos opciones:\
+	- cargar los pesos y bias de una red neuronal ya entrenada: Si se elige esta 	   opci\'f3n el programa prosigue a la etapa siguiente,\
+	- cargar una base de datos: Aqu\'ed el programa le pedir\'e1 al usuario ingresar una 	 base de datos mediante dos archivos. Uno contendr\'e1 los datos de la 	  econom\'eda del pa\'eds y otro datos sobre los candidatos. La base de datos tiene 	   que tener un formato definido, el cual se explicar\'e1 m\'e1s adelante.\
+	Si se elige la segunda opci\'f3n el programa cargar\'e1 la base de datos sobre la que se entrenar\'e1 la red neuronal. Para ello pedir\'e1 al usuario los path de los archivos de dicha base. \
+	A continuaci\'f3n se entrenar\'e1 a la red neuronal seg\'fan el algoritmo gen\'e9tico definido en la secci\'f3n anterior. Luego le preguntar\'e1 al usuario si desea guardar los pesos y bias de la red. Esto se hace para no tener que entrenar una nueva red cada vez que se quiera ejecutar el programa.\
+	En cualquier caso, a continuaci\'f3n, el programa ofrece al usuario la posibilidad de simular una elecci\'f3n. Si el usuario acepta hacer esto, el programa le pedir\'e1 que ingrese por pantalla los datos de la econom\'eda del pa\'eds del a\'f1o electoral y el anterior: \
+	- desempleo: fracci\'f3n de la poblaci\'f3n que no tiene trabajo (un n\'famero de 0 a 	   1),\
+	- pobreza: fracci\'f3n de la poblaci\'f3n que es pobre (un n\'famero de 0 a 1),\
+	- crecimiento del PBI: un n\'famero mayor a -1,\
+	- inflaci\'f3n: un n\'famero mayor a -1, \
+	- n\'famero de candidatos.\
+	A continuaci\'f3n le pedir\'e1 que ingrese por pantalla los datos de los candidatos:\
+	- puntaje: un n\'famero entre 0 y 1 que representa su ideolog\'eda (0 extrema 	   izquierda, 1 extrema derecha),\
+	- poder: un booleano que indica si el partido del candidato est\'e1 en el gobierno o 	  no,\
+	- imagen: la suma de la imagen positiva y regular del candidato (un n\'famero 	  entre 0 y 1),\
+	- encuestas: el promedio en las encuestas del candidato (un n\'famero entre 0 y 	   1).\
+	A continuaci\'f3n el programa arrojar\'e1 los porcentajes que se espera que obtenga cada candidato en la elecci\'f3n haciendo la proyecci\'f3n de indecisos (normalizando los porcentajes a 100). Luego, le ofrecer\'e1 al usuario la posibilidad de guardar el resultado de la simulaci\'f3n. Si se elige guardarlo, el resultado se escribe a un archivo .txt.\
+	Por \'faltimo le preguntar\'e1 al usuario si quiere simular otra elecci\'f3n. El programa continuar\'e1 hasta que el usuario ya no dese\'e9 realizar m\'e1s simulaciones.\
+\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qc\partightenfactor0
+\cf0 Base de datos\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qj\partightenfactor0
+\cf0 \
+	La base de datos con la que se trabaja para entrenar la red tiene el siguiente formato.\
+	En un primer archivo figuran los datos de la econom\'eda del pa\'eds del siguiente modo:\
+	- a\'f1o de la elecci\'f3n,\
+	- desempleo el a\'f1o electoral,\
+	- desempleo el a\'f1o anterior,\
+	- pobreza el a\'f1o electoral,\
+	- pobreza el a\'f1o anterior,\
+	- variaci\'f3n del PBI el a\'f1o electoral,\
+	- variaci\'f3n del PBI el a\'f1o anterior,\
+	- inflaci\'f3n el a\'f1o electoral,\
+	- inflaci\'f3n el a\'f1o anterior,\
+	- n\'famero de candidatos que compiten en la elecci\'f3n.\
+	El tipo de dato que es cada uno de estos par\'e1metros es el mismo que cuando se solicita su ingreso por pantalla.\
+	En otro archivo figuran los datos de los candidatos se la siguiente manera:\
+	- a\'f1o de la elecci\'f3n (se utiliza como comprobaci\'f3n de que ambos archivos se 	   est\'e9n leyendo del modo correcto, si los a\'f1os no coinciden hay un problema),\
+	- puntaje ideol\'f3gico el candidato,\
+	- booleano que indica si su partido se encuentra o no en el poder,\
+	- imagen positiva y regular del candidato,\
+	- promedio en las encuestas,\
+	- resultado que haya obtenido en la elecci\'f3n.	\
+	Figuran 2 elecciones para el a\'f1o 2015 dado que en dicho a\'f1o la elecci\'f3n se defini\'f3 en una segunda vuelta.\
+	\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qc\partightenfactor0
+\cf0 Comentarios finales\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\sl264\slmult1\sb20\sa180\pardirnatural\qj\partightenfactor0
+\cf0 \
+	Se adjuntan los siguientes archivos:\
+	- Eleccion_Genetica.cpp : main del programa.\
+	- Red_Genetica.h : declaraci\'f3n de la clase Neural_Network y sus funciones.\
+	- Datos.h : estructuras de datos utilizadas y funciones para leer y escribir  	   archivos .txt\
+	- Data.txt : archivo con los datos de los candidatos,\
+	- Data_econom.txt : archivo con los datos de la econom\'eda del pa\'eds,\
+	- Pesos_y_bias_con_2019.txt : archivo con los pesos y biases de una red 	   neuronal ya entrenada.\
+	- Pesos_y_bias_sin_2019 : red neuronal entrenada sin utilizar los datos 	   correspondientes a 2019 (se uso para observar la predicci\'f3n de una elecci\'f3n 	   con la que la red no se entren\'f3 y de la cual se conoc\'eda el resultado).\
+	- Resultados_2021.txt : resultados para las elecciones de 2021 de acuerdo a 	   las proyecciones del Ministerio de Econom\'eda y los promedios en encuestas a 	  octubre del 2020. Obtenidos utilizando la red neuronal entrenada sobre la 	   base de datos completa.\
+	- Resultados_2019_21.txt : resultados para las elecciones de 2019 y 2021. 	    Obtenidos utilizando la red entrenada sin los datos correspondientes a 2019.\
+	- Error.txt : archivo que contiene el valor de la funci\'f3n costo para cada 	    iteraci\'f3n. Para la red entrenada sobre la base de datos completa.\
+	- Costo_vs_iteracion.png : gr\'e1fico en base al archivo Error.txt}
