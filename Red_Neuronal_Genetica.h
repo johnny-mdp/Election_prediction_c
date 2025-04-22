@@ -5,7 +5,7 @@ using namespace std;
 
 
 
-vector <float> Sigmoide( vector <float> aux);
+vector <float> Sigmoid( vector <float> aux);
 
 
 
@@ -14,8 +14,7 @@ public:
 	float delta(float a, float y){
 		if (a<0 || a> 100)
 			return abs(a-y)*100;	
-		// Si por algun tema numérico arroja una fracción de votos negativa quiero castigar fuertemente eso
-		// Idem para fracciones mayores a 1.
+		// Heavily penalize predictions outise the 0-1 range
 		return abs(a-y);
 	}
 };
@@ -23,61 +22,60 @@ public:
 
 class Neural_Network : public Cost_function
 {	
-	vector < vector < vector <float> > > pesos;	
-	//Los pesos de la red neuronal son un vector de matrices. Cada matriz conecta una capa con la siguiente
-	vector < vector <float> > bias;
-	//	Los bias de la res son un vector de vectores. Cada bias es una característica de una neurona.
+	vector < vector < vector <float> > > weights;	
+	//The NN's weights, a vector of matrices
+	vector < vector <float> > bias; // The NN's biases
 	public:
-		float total_error;		// Parametro de costo que me dice que tan buen o malo es el ajuste de mi red al set de datos.
-		vector <int> tamanos;	// Nro de neuronas en cada capa
+		float total_error;	// Cost parameter that evaluates the goodness of fit
+		vector <int> sizes;	// Number of neurons per layer
 
 		Neural_Network(){ total_error = 0;	}
 		Neural_Network(  vector <int> sizes){
 			total_error = 0;
-			tamanos = sizes;
+			sizes = sizes;
 		}
 		~Neural_Network(){}
 
-		void Inicia_pesos_bias();	// Initializes the weights and biases of each NN
-		void Entrenar(vector <Eleccion> entrenamiento);	// Trains the NN 1 epoch
-		double Feed_forward(Candidato candidate, Pais country);	
-		float Get_Total_Error() { return total_error;}	// Gets NN's total error
+		void InitilizeParameters();	// Initializes the weights and biases of each NN
+		void Train(vector <Election> training);	// Trains the NN 1 epoch
+		double FeedForward(Candidate candidate, Pais country);	
+		float GetTotalError() { return total_error;}	// Gets NN's total error
 		
-		float Get_Peso(int i, int j, int k){ return pesos[i][j][k];}		
-		void Set_Peso(int i, int j, int k, float value){ pesos[i][j][k] = value;}
-		float Get_Bias(int i, int j){ return bias[i][j];}
-		void Set_Bias(int i, int j, float value){ bias[i][j] = value;}
+		float GetWeigth(int i, int j, int k){ return weights[i][j][k];}		
+		void SetWeigth(int i, int j, int k, float value){ weights[i][j][k] = value;}
+		float GetBias(int i, int j){ return bias[i][j];}
+		void SetBias(int i, int j, float value){ bias[i][j] = value;}
 		void Predict();		// Once trained the NN can predic elections
-		void Calcula_porcentajes(Eleccion & elect, double & norm);
+		void CalculateResults( Election & elect, double & norm);
 
 
-		friend void Save_red(Neural_Network Red_final);		// Saves weights and biases of the NN to a .txt file
-		friend void Load_red(Neural_Network & Red_final);	// Reads weights and biases of the NN from a .txt file
-		friend Neural_Network Hijo(Neural_Network padre, Neural_Network madre); // Creates the next generation of NN
+		friend void SaveNet(Neural_Network final_net);		// Saves weights and biases of the NN to a .txt file
+		friend void LoadNet(Neural_Network & final_net);	// Reads weights and biases of the NN from a .txt file
+		friend Neural_Network Son(Neural_Network father, Neural_Network mother); // Creates the next generation of NN
 };
 
 
 
-void Neural_Network::Inicia_pesos_bias(){
-	pesos.resize( tamanos.size()-1 );
-	bias.resize( tamanos.size()-1 ); 
+void Neural_Network::InitilizeParameters(){
+	weights.resize( sizes.size()-1 );
+	bias.resize( sizes.size()-1 ); 
 	auto start = high_resolution_clock::now(); 
 
 	std::random_device rd;
 	std::default_random_engine generator;
 	generator.seed( rd() );
 	std::normal_distribution<double> distribution(0,1);
-	for (int i = 0; i < (tamanos.size()-1); ++i){
-		int T = tamanos[i+1];
-		int S = tamanos[i];
+	for (int i = 0; i < (sizes.size()-1); ++i){
+		int T = sizes[i+1];
+		int S = sizes[i];
 		float aux[T][S];
 		float aux_bias[T];
-		pesos[i].resize( T );
+		weights[i].resize( T );
 		bias[i].resize( T );
 		for (int j = 0; j < T; ++j){
-			pesos[i][j].resize( S );
+			weights[i][j].resize( S );
 			for (int k = 0; k < S; ++k){
-				pesos[i][j][k] = distribution(generator);
+				weights[i][j][k] = distribution(generator);
 			}
 		}
 
@@ -89,39 +87,41 @@ void Neural_Network::Inicia_pesos_bias(){
 
 
 
-void Neural_Network::Entrenar( vector <Eleccion> entrenamiento){
-	double resultado_corregido; 
+void Neural_Network::Train( vector <Election> training){
+	double result_pred; 
 	total_error = 0;
 	for (int i = 0; i < entrenamiento.size(); ++i){
 		for (int j = 0; j < entrenamiento[i].candidates.size(); ++j){	
 			// Calculates the election's result and the error compared to the actual result
-			resultado_corregido = Feed_forward(entrenamiento[i].candidates[j], entrenamiento[i].country);
-			total_error += delta(entrenamiento[i].resultados[j],resultado_corregido);	
+			result_pred = Feed_forward(training[i].candidates[j], training[i].country);
+			total_error += delta(training[i].results[j],result_pred);	
 		}
 	}
 }
 
 
 
-double Neural_Network::Feed_forward( Candidato candidate, Pais country){
+double Neural_Network::FeedForward( Candidate candidate, Country country){
 	vector <float> input; input.resize(tamanos[0]);
 	// Input, 1 candidate and the country's economic status
-	input[0] = candidate.puntaje;	input[1] = candidate.poder;	input[2] = candidate.encuestas;	input[3] = candidate.imagen;
-	input[4] = country.pobreza[0];	input[5] = country.pobreza[1];	input[6] = country.desempleo[0];	input[7] = country.desempleo[1];
-	input[8] = country.pbi_crec[0];	input[9] = country.pbi_crec[1];	input[10] = country.inflac[0];	input[11] = country.inflac[1];
+	input[0] = candidate.ideology;	input[1] = candidate.power;
+	input[2] = candidate.polling;	input[3] = candidate.image;
+	input[4] = country.poverty[0];	input[5] = country.poverty[1];	
+	input[6] = country.unemployment[0];	input[7] = country.unemployment[1];
+	input[8] = country.gdp_growth[0];	input[9] = country.gdp_growth[1];	
+	input[10] = country.inflation[0];	input[11] = country.inflation[1];
 	
-	for (int i = 0; i < tamanos.size()-1; i++){
-		vector <float> aux; aux.resize(tamanos[i+1], 0);
+	for (int i = 0; i < sizes.size()-1; i++){
+		vector <float> aux; aux.resize(sizes[i+1], 0);
 			
-		for (int j = 0; j < tamanos[i+1]; ++j){	
-			for (int k = 0; k < tamanos[i]; ++k){
-				aux[j] += pesos[i][j][k]*input[k];
+		for (int j = 0; j < sizes[i+1]; ++j){	
+			for (int k = 0; k < sizes[i]; ++k){
+				aux[j] += weights[i][j][k]*input[k];
 			}
 			aux[j] += bias[i][j];
 		}
 		input.clear();
-		input = Sigmoide(aux);
-		
+		input = Sigmoid(aux);
 	}
 	// Returns an estimate of the candidate's vote share
 	return input[0]; 
@@ -129,45 +129,45 @@ double Neural_Network::Feed_forward( Candidato candidate, Pais country){
 
 
 void Neural_Network::Predict(){
-	Eleccion elect;
-	double norm = 0;	// norm me sirve para redondear los porcentaje a 1 (proyecció de indecisos)
+	Election elect;
+	double norm = 0;	// (projects undecided voters
 	char c;
-	cout << "¿Desea ud. simular una eleccion? S/N" << endl;
+	cout << "Do you wish to simulate an election? y/n" << endl;
 	cin >> c;
 
 	fstream myresults;	// Guardará el resultado de la simulacion de la eleccion
-	char name[] = "Resultados_de_la_simulacion.txt";
+	char name[] = "Simulation_results.txt";
 	myresults.open(name,fstream::out);
 	const auto begin = myresults.tellg();// servirá para decir si el archivo de resultados está vacio
 
 	c = std::tolower(c);
-	while (c == 's' ){	
-		elect = Leer_datos();
+	while (c == 'y' ){	
+		elect = ReadData();
 
-		Calcula_porcentajes(elect, norm);
+		CalculateResults(elect, norm);
 
-		for (int i = 0; i < elect.country.cand_por_ano; ++i){
-			elect.resultados[i] = elect.resultados[i]/ norm;//Distributes undecided voters
-			cout << "El candidato " << i+1 << " obtendría " << elect.resultados[i]*100 << "% de los votos."<< endl;
+		for (int i = 0; i < elect.country.cand_per_year; ++i){
+			elect.results[i] = elect.results[i]/ norm;//Distributes undecided voters
+			cout << "Candidate " << i+1 << "  would get " << elect.resultados[i]*100 << "% of the votes."<< endl;
 		}
 
-		cout <<"¿Desea guardar los resultados de esta simulacion? S/N" << endl;
-		char guardar = 's';
+		cout <<"Save results? y/n" << endl;
+		char guardar = 'y';
 		cin >> guardar;
 		guardar = std::tolower(guardar);
-		while ( guardar != 's' && guardar != 'n'){
-			cout << "Caracter ingresado incorrecto. Intente nuevamente." << endl;
+		while ( guardar != 'y' && guardar != 'n'){
+			cout << "Incorrect, try again." << endl;
 			cin >> guardar;
 		}
-		if( guardar == 's' || guardar == 'S'){
-			Guardar_Eleccion(elect, myresults);
+		if( guardar == 'y'){
+			SaveElection(elect, myresults);
 		}
 
-		cout <<"¿Desea simular otra eleccion? S/N" << endl;
+		cout <<"Simulate another election? y/n" << endl;
 		cin >> c;
 		c = std::tolower(c);
-		while ( c != 's' && c != 'n'){
-			cout << "Caracter ingresado incorrecto. Intente nuevamente." << endl;
+		while ( c != 'y' && c != 'n'){
+			cout << "Incorrect, try again." << endl;
 			cin >> c;
 		}
 		norm = 0;
@@ -177,53 +177,53 @@ void Neural_Network::Predict(){
 	if ( fsize == 0){
 		int i = remove(name);
 		if (i == 0){
-			cout << "Archivo sin usar borrado con éxito. \n";
+			cout << "Unused file succesfully deleted.\n";
 		}
 		else{
-			cout << "ERROR. No se pudo borrar el archivo de salida sin uso. \n";
+			cout << "ERROR. Could not delete file. \n";
 		}
 	}
 	myresults.close();
 }
 
 
-void Neural_Network::Calcula_porcentajes(Eleccion & elect, double & norm){
-	for (int i = 0; i < elect.country.cand_por_ano; ++i){
-		elect.resultados[i] = Feed_forward(elect.candidates[i], elect.country);// calcula el resultado del candidato
-		norm += elect.resultados[i];
+void Neural_Network::CalculateResults(Election & elect, double & norm){
+	for (int i = 0; i < elect.country.cand_per_year; ++i){
+		elect.results[i] = FeedForward(elect.candidates[i], elect.country);// calcula el resultado del candidato
+		norm += elect.results[i];
 	}
 }
 
 
 
-void Save_red(Neural_Network Red_final){
+void SaveNet(Neural_Network final_net){
 	ofstream mysave;
-	mysave.open("Pesos_y_bias.txt");
+	mysave.open("weights_and_biases.txt");
 
-	mysave << Red_final.tamanos.size(); // How many layers does the NN have
+	mysave << final_net.sizes.size(); // How many layers does the NN have
 	mysave << endl <<endl;
-	for (int i = 0; i < Red_final.tamanos.size(); ++i){
+	for (int i = 0; i < final_net.sizes.size(); ++i){
 		// The number of neurons on each layer
-		mysave << Red_final.tamanos[i] << "	";
+		mysave << final_net.sizes[i] << "	";
 	}
 	mysave << endl << endl;
 
-	for (int i = 0; i < (Red_final.tamanos.size()-1); ++i){
-		int T = Red_final.tamanos[i+1];
-		int S = Red_final.tamanos[i];
+	for (int i = 0; i < (final_net.sizes.size()-1); ++i){
+		int T = final_net.sizes[i+1];
+		int S = final_net.sizes[i];
 		for (int j = 0; j < T; ++j){
 			for (int k = 0; k < S; ++k){
-				mysave << Red_final.pesos[i][j][k] << "	";
+				mysave << final_net.weights[i][j][k] << "	";
 			}
 			mysave << endl;
 		}
 	}
 
-	for (int i = 0; i < (Red_final.tamanos.size()-1); ++i){
-		int T = Red_final.tamanos[i+1];
-		int S = Red_final.tamanos[i];
+	for (int i = 0; i < (final_net.sizes.size()-1); ++i){
+		int T = final_net.sizes[i+1];
+		int S = final_net.sizes[i];
 		for (int k = 0; k < T; ++k){
-			mysave << Red_final.bias[i][k]<< "	";
+			mysave << final_net.bias[i][k]<< "	";
 		}
 	}
 	mysave.close();
@@ -231,14 +231,14 @@ void Save_red(Neural_Network Red_final){
 
 
 
-void Load_red(Neural_Network & Red_final){
+void LoadNed(Neural_Network & final_net){
 	fstream myload;
 	string path_arch;
-	cout << "Ingrese el path del archivo con los pesos y biases de la red ya entrenada:" << endl;
+	cout << "Enter path to the file with the weights and biases of a trained NN:" << endl;
 	cin >> path_arch;
 	myload.open(path_arch);
 	while (myload.fail()){	// Sino encuentra el archivo inisiste
-		cout << "Intente nuevamente ingresar el path: \n";
+		cout << "Try again: \n";
 		cin >> path_arch;
 		myload.open(path_arch);
 	}
@@ -253,79 +253,80 @@ void Load_red(Neural_Network & Red_final){
 
 	for (int i = 0; i < t; i++){
 		myload >> a;
-		Red_final.tamanos.push_back(a);
+		final_net.sizes.push_back(a);
 	}
-	cout << "Tamaños leidos \n";
+	cout << "Read sizes \n";
 	std::getline(myload, line);
-	Red_final.pesos.resize(t-1);
-	Red_final.bias.resize(t-1);
+	final_net.weights.resize(t-1);
+	final_net.bias.resize(t-1);
 
-	//Ahora leimos los pesos
-	for (int i = 0; i < (Red_final.tamanos.size()-1); ++i){
-		int T = Red_final.tamanos[i+1];
-		int S = Red_final.tamanos[i];
+	//ARead weigths
+	for (int i = 0; i < (final_net.sizes.size()-1); ++i){
+		int T = final_net.sizes[i+1];
+		int S = final_net.sizes[i];
 		
-		Red_final.pesos[i].resize( T );
+		final_net.weights[i].resize( T );
 		for (int j = 0; j < T; ++j){
-			Red_final.pesos[i][j].resize( S );
+			final_net.weights[i][j].resize( S );
 			for (int k = 0; k < S; ++k){
 				myload >> b;
-				Red_final.pesos[i][j][k] = b;
+				final_net.weights[i][j][k] = b;
 			}
 		}
 	}
-	cout << "Pesos leidos \n";
+	cout << "Read weights.\n";
 	std::getline(myload, line);
 
-	for (int i = 0; i < (Red_final.tamanos.size()-1); ++i){
-		int T = Red_final.tamanos[i+1];
+	for (int i = 0; i < (final_net.sizes.size()-1); ++i){
+		int T = final_net.sizes[i+1];
 		float aux_bias[T];
-		Red_final.bias[i].resize( T );
+		final_net.bias[i].resize( T );
 
 		for (int k = 0; k < T; ++k){
 			myload >> b;
-			Red_final.bias[i][k] = b;
+			final_net.bias[i][k] = b;
 		}
 	}
-	cout << "Biases leidos \n";
+	cout << "Read biases \n";
 	myload.close();
 }
 
 
 
-Neural_Network Hijo(Neural_Network padre, Neural_Network madre){
+Neural_Network Son(Neural_Network father, Neural_Network mother){
 	std::random_device rd;
 	std::default_random_engine generator;
 	generator.seed( rd() ); //Now this is seeded differently each time.
 	std::normal_distribution<double> distribution(0,1);	
-	padre.total_error = 0;
-	for (int capa = 0; capa < padre.tamanos.size()-1; ++capa){
-		for (int j = 0; j < padre.tamanos[capa+1]; ++j){
+	
+	father.total_error = 0;
+	for (int layer = 0; layher < father.sizes.size()-1; ++layer){
+		for (int j = 0; j < father.sizes[capa+1]; ++j){
 			if ( distribution(generator) < 0 ){
 				// A weigth is inherited from each parent with a 50% chance
-				padre.bias[capa][j] = madre.bias[capa][j];
+				father.bias[capa][j] = mother.bias[capa][j];
 			}	
 			if  ( abs( distribution(generator) ) < 0.001){
 				// Random mutations
-				padre.bias[capa][j] = distribution(generator);
+				father.bias[capa][j] = distribution(generator);
 			}
 
-			for ( int k=0; k<padre.tamanos[capa] ; k++ ){
+			for ( int k=0; k<father.tamanos[capa] ; k++ ){
 				if ( distribution(generator) < 0){
-					padre.pesos[capa][j][k] = madre.pesos[capa][j][k];
+					father.weights[capa][j][k] = mother.weights[capa][j][k];
 				}	
 				if  ( abs(distribution(generator)) < 0.001){
 					//cout <<"Bias evoluciona al azar" << endl;
-					padre.pesos[capa][j][k] = distribution(generator);
+					father.weights[capa][j][k] = distribution(generator);
 				}
 			}
 		}
 	}
-	return padre;
+	return father;
 }
 
 
-vector <float> Sigmoide( vector <float> aux){
+vector <float> Sigmoid( vector <float> aux){
 	for (int i = 0; i < aux.size(); ++i)	{
 		aux[i] =  1./(1. + pow(2.71828, -aux[i]) ) ;
 	}
