@@ -16,15 +16,14 @@ using namespace std::chrono;
 #include <random>
 #include "Red_Neuronal_Genetica.h"
 
-//g++ -std=c++11 Eleccion_Genetica.o Eleccion_Genetica.cpp
+//g++ -std=c++11 Genetic_Election.o Genetic_Election.cpp
 
 
 
 // Sorting function to compare performance of different NNs
-bool Orden(Neural_Network arg1, Neural_Network arg2){
-	if ( arg1.Get_Total_Error() > arg2.Get_Total_Error() )
+bool Order(Neural_Network arg1, Neural_Network arg2){
+	if ( arg1.GetTotalError() > arg2.GetTotalError() )
 		return false;
-
 	return true;
 }
 
@@ -32,104 +31,104 @@ bool Orden(Neural_Network arg1, Neural_Network arg2){
 
 int main(){
 	char l;
-	Neural_Network Red_lista; // Red neuronal con la que se predicirá el resultado de la elecciones
-	cout << "¿Tiene ud. un archivo de texto con los pesos y bias de una red neuroanal ya entrenada que desee cargar? S/N" << endl;
+	Neural_Network final_net; // Red neuronal con la que se predicirá el resultado de la Electiones
+	cout << "Do you have an already trained NN? y/n" << endl;
 	cin >> l;		// In case wealready have a trained NN
 	l = std::tolower(l);
-	while ( l != 's' && l != 'n'){
-		cout << "Caracter ingresado incorrecto. Intente nuevamente." << endl;
+	while ( l != 'y' && l != 'n'){
+		cout << "Incorrect, try again." << endl;
 		cin >> l;
 	}
 	
-	if ( l == 's'){
-		Load_red(Red_lista);	// Load a NN's parameters
-		Red_lista.Predict();	// Function that predicts an election
+	if ( l == 'y'){
+		LoadNet(final_net);	// Load a NN's parameters
+		final_net.Predict();	// Function that predicts an election
 		return 0;
 	}
 
 	fstream mycandidate, mycountry;
 	string path_arch;
-	cout << "Ingrese el path del archivo con los datos de los candidatos:" << endl;
+	cout << "Enter file path to the candidate data:" << endl;
 	
 	cin >> path_arch;
 	mycandidate.open(path_arch);	
 	while (mycandidate.fail()){
-		cout << "Intente nuevamente ingresar el path: \n";
+		cout << "Error, try again: \n";
 		cin >> path_arch;
 		mycandidate.open(path_arch);
 	}
 
-	cout << "Ingrese el path del archivo con los datos de la economia:" << endl;
+	cout << "Enter file path to the economic data:" << endl;
 	
 	cin >> path_arch;
 	mycountry.open(path_arch);
 	while (mycountry.fail()){
-		cout << "Intente nuevamente ingresar el path: \n";
+		cout << "Error, try again:\n";
 		cin >> path_arch;
 		mycountry.open(path_arch);
 	}
 
 
-	vector < Eleccion > entrenamiento;	// training data set
-	Cargar_datos(entrenamiento, mycandidate, mycountry); 
-	if (entrenamiento.size()==0){return 1;}
+	vector < Election > traning;	// training data set
+	LoadData(traning, mycandidate, mycountry); 
+	if (traning.size()==0){return 1;}
 
 	mycandidate.close(); mycountry.close();
 
-	int Poblacion_total = 6;		// Population size
-	int Generaciones = 100000;		// Max number of iterations
-	vector < Neural_Network > poblacion;  
-	vector <int> tamanos;	// Number of neurons on each layer of the NN
+	int total_population = 6;		// Population size
+	int generations = 100000;		// Max number of iterations
+	vector < Neural_Network > population;  
+	vector <int> sizes;	// Number of neurons on each layer of the NN
 	
-	tamanos.push_back(12); tamanos.push_back(5); tamanos.push_back(5); tamanos.push_back(1);
+	sizes.push_back(12); sizes.push_back(5); sizes.push_back(5); sizes.push_back(1);
 
-	for (int i = 0; i < Poblacion_total; ++i) {
+	for (int i = 0; i < total_population; ++i) {
 		//creates first generation of NN
-		Neural_Network red( tamanos );
-		cout <<"Individuo " << i+1<< endl;
-		red.Inicia_pesos_bias();
-		poblacion.push_back( red );
+		Neural_Network aux_net( sizes );
+		cout <<"Individual " << i+1<< endl;
+		aux_net.InitializeParameters();
+		population.push_back( red );
 	}
 
 
-	Neural_Network padre, madre, hijo;	// These NNs produce the next generation
+	Neural_Network father, mother, son;	// These NNs produce the next generation
 	ofstream myerror;
 	myerror.open("Error.txt");
-	for (int x = 0; x < Generaciones; ++x){
-		cout << "Generacion nro " << x << endl;		// So the user can track progress
-		for (int j = 0; j < poblacion.size(); ++j){
-			poblacion[j].Entrenar(entrenamiento);
+	for (int x = 0; x < generations; ++x){
+		cout << "Generation num " << x << endl;		// So the user can track progress
+		for (int j = 0; j < population.size(); ++j){
+			population[j].Train(entrenamiento);
 		}
-		sort(poblacion.begin(), poblacion.end(), Orden);	// Sorts population by error
-		padre= poblacion[ 0 ];
-		madre= poblacion[ 1 ];
-		poblacion.clear();
+		sort(population.begin(), population.end(), Order);	// Sorts population by error
+		father = population[ 0 ];
+		mother = population[ 1 ];
+		population.clear();
 		
-		Guardar_Error( myerror, x, padre.Get_Total_Error()/entrenamiento.size(), madre.Get_Total_Error()/entrenamiento.size());
+		SaveError( myerror, x, father.GetTotalError()/traning.size(), mother.GetTotalError()/traning.size());
 
-		if (padre.Get_Total_Error()/entrenamiento.size() < 0.12){
+		if (father.Get_Total_Error()/traning.size() < 0.12){
 			// if we attain the desired precission, training stops
 			break;
 		}
 		
-		for (int i = 0; i < Poblacion_total; ++i){
-			hijo = Hijo( padre, madre );
-			poblacion.push_back( hijo );
+		for (int i = 0; i < total_population; ++i){
+			son = Son( father, mother );
+			population.push_back( son );
 		}
 	}
 	myerror.close();
 
 	
-	Red_lista = padre;	
-	cout<< "¿Desea guardar los pesos y bias de la red neuronal? S/N" << endl;
+	final_net = father;	
+	cout<< "Do you wish to save this trained NN? y/n" << endl;
 	char c;
 	cin >> c; c = std::tolower(c);
-	while ( c != 's' && c != 'n'){
-		cout << "Caracter ingresado incorrecto. Intente nuevamente." << endl;
+	while ( c != 'y' && c != 'n'){
+		cout << "Incorrect, try again." << endl;
 		cin >> c;
 	}
-	if ( c== 's' ) Save_red(Red_lista);
+	if ( c== 's' ) SaveNet(final_net);
 
-	Red_lista.Predict();	// Se pasa el control a la función que predice elecciones en base a un red entrenada
+	final_net.Predict();	// Se pasa el control a la función que predice Electiones en base a un red entrenada
 	return 0;
 }
