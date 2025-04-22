@@ -7,145 +7,144 @@
 using namespace std;
 using namespace std::chrono;
 
-struct Candidato{
-	int ano;	// A candidate compites a given year
-	float puntaje;	// A candidate a given ideology
-	bool poder;	// A candidate's party is or is not in power
-	float encuestas;// Candidate's polling average
-	float imagen; // Cadidate's  possitive+regular favourability rating
+struct Candidate{
+	int year;	// A candidate compites a given year
+	float ideology;	// A candidate a given ideology
+	bool power;	// A candidate's party is or is not in power
+	float polling;// Candidate's polling average
+	float image; // Cadidate's  possitive+regular favourability rating
 
-	Candidato(){}
-	Candidato (int a, float pun, int pod, float ima, float encu){
-		ano = a;
-		puntaje = pun;
-		poder = pod;
-		imagen = ima;
-		encuestas = encu;
+	Candidate(){}
+	Candidate (int a, float pun, int pod, float ima, float encu){
+		year = a;
+		ideology = pun;
+		power = pod;
+		image = ima;
+		polling = encu;
 	}
 };
 
-ostream &operator<<(ostream &os, Candidato cand){
+ostream &operator<<(ostream &os, Candidate cand){
 	//Overloding  << to write a Candidate variable
-	os << cand.ano << "	" << cand.puntaje << "	" << cand.poder << "	"\
-		<< cand.imagen << "	" << cand.encuestas;
+	os << cand.year << "	" << cand.ideology << "	" << cand.power << "	"\
+		<< cand.image << "	" << cand.polling;
 	return os;
 }
 
 
 
-struct Pais{
+struct Country{
 	// Country's economic variables
-	int ano;	
-	float desempleo[2];
-	float pobreza[2];
-	float pbi_crec[2];
-	float inflac[2];
+	int year;	
+	float unemployment[2];
+	float poverty[2];
+	float gdp_growth[2];
+	float inflation[2];
 	int cand_por_ano; // Number of candidates per election
 
 	Pais(){}
-	Pais(int a, float des, float des_ant, float pob, float pob_ant, float gdp_crec,float gdp_crec_ant, float infl, float infl_ant){
-		ano = a;
-		desempleo[0] = des;	desempleo[1] = des_ant;
-		pobreza[0] = pob;	pobreza[1] = pob_ant ;
-		pbi_crec[0] = gdp_crec; pbi_crec[1] = gdp_crec_ant;
-		inflac[0] = infl; inflac[1] = infl_ant;
+	Pais(int a, float unemp, float prev_unemp, float pov, float prev_pov, float gdp_gro, float prev_gdp_gro, float infl, float prev_infl){
+		year = a;
+		unemployment[0] = unemp;	unemployment[1] = prev_unemp;
+		poverty[0] = pov;	poverty[1] = prev_pov ;
+		gdp_growth[0] = gdp_gro; gdp_growth[1] = prev_gdp_gro;
+		inflation[0] = infl; inflation[1] = prev_infl;
 	}
 };
 
-ostream &operator<<(ostream &os, Pais country){	
+ostream &operator<<(ostream &os, Country country){	
 	//Overloding << to write the country's economic state
-	os << country.ano << "	" << country.desempleo[0]  << "	" << country.desempleo[1] << "	" \
-		<< country.pobreza[0] << "	" << country.pobreza[1] << "	"\
-		<< country.pbi_crec[0] << "	" << country.pbi_crec[1] << "	"\
-		<< country.inflac[0] << "	" << country.inflac[1] << "	" << country.cand_por_ano; 
+	os << country.year << "	" << country.unemployment[0]  << "	" << country.unemployment[1] << "	" \
+		<< country.poverty[0] << "	" << country.poverty[1] << "	"\
+		<< country.gdp_growth[0] << "	" << country.gdp_growth[1] << "	"\
+		<< country.inflation[0] << "	" << country.inflation[1] << "	" << country.cand_per_year; 
 	return os;
 }
 
 
 
-struct Eleccion{
+struct Election{
 	// An election has a set of candidates and a economic context
-	vector <Candidato> candidates;
-	vector <float> resultados;
-	Pais country;
+	vector <Candidate> candidates;
+	vector <float> results;
+	Country country;
 
-	Eleccion(){}
-	Eleccion( Pais argentina, vector<Candidato> candi, vector <float> results){
+	Election(){}
+	Election( Country argentina, vector<Candidate> candi, vector <float> results){
 		country = argentina;
 		candidates = candi;
-		resultados = results;
+		results = results;
 	}
 };
 
-void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fstream  & mycountry ); // Load the training data set
-void Expandir_data_set( vector <Eleccion> & entrenamiento );// Data aumentation
-void Guardar_Eleccion(Eleccion elect, fstream & myresults); // Saves the results of a simulated election to a txt file
-void Guardar_Error(ofstream & myfile, int i, float a, float b);	// Tracks at each iteration the error and saves it to a .txt file
-void Leer_datos( Pais & argentina, vector<Candidato> & candis); // Uses console I/O to read an election input data
+void LoadData( vector <Election> & training, fstream & mycandidate, fstream  & mycountry ); // Load the training data set
+void DataAugmentation( vector <Election> & training );// Data aumentation
+void SaveElection(Election elect, fstream & myresults); // Saves the results of a simulated election to a txt file
+void SaveError(ofstream & myfile, int i, float a, float b);	// Tracks at each iteration the error and saves it to a .txt file
+void ReadData( Country & argentina, vector<Candidate> & candis); // Uses console I/O to read an election input data
 
 
 
-void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fstream & mycountry ){
-	Pais argentina;
+void LoadData( vector <Election> & training, fstream & mycandidate, fstream & mycountry ){
+	Country argentina;
 	std::string line;
 	std::getline(mycountry, line);
 	std::getline(mycandidate, line);
 
 	while (!mycandidate.eof() && !mycountry.eof()){
 	// First loads economic data and number of candidates
-		mycountry >> argentina.ano;	
+		mycountry >> argentina.year;	
 
-		mycountry >> argentina.desempleo[0];
-		mycountry >> argentina.desempleo[1];
+		mycountry >> argentina.unemployment[0];
+		mycountry >> argentina.unemployment[1];
 		
-		mycountry >> argentina.pobreza[0];	
-		mycountry >> argentina.pobreza[1];
+		mycountry >> argentina.poverty[0];	
+		mycountry >> argentina.poverty[1];
 
-		mycountry >> argentina.pbi_crec[0];
-		mycountry >> argentina.pbi_crec[1];
+		mycountry >> argentina.gdp_growth[0];
+		mycountry >> argentina.gdp_growth[1];
 		
-		mycountry >> argentina.inflac[0];
-		mycountry >> argentina.inflac[1];	
+		mycountry >> argentina.inflation[0];
+		mycountry >> argentina.inflation[1];	
 
-		mycountry >> argentina.cand_por_ano;
+		mycountry >> argentina.cand_per_year;
 
-		if (argentina.cand_por_ano <0 ){cout << "Error. Base de datos corrupta.\n"; return;}
+		if (argentina.cand_per_year <0 ){cout << "Error. Corrupted data base.\n"; return;}
 
-		if (argentina.desempleo[0] <0 || argentina.desempleo[0] >1 \
-			|| argentina.desempleo[1] <0 || argentina.desempleo[1] >1 \
-			|| argentina.pobreza[0] <0 || argentina.pobreza[0] >1 \
-			|| argentina.pobreza[1] <0 || argentina.pobreza[1] >1 \
-			|| argentina.pbi_crec[0] <-1 || argentina.pbi_crec[1] <-1 \
-			|| argentina.inflac[0] <-1  || argentina.inflac[1] <-1 \
-			|| argentina.cand_por_ano <0){
-			cout << "Error. Base de datos corrupta.\n"; return;
+		if (argentina.unemployment[0] <0 || argentina.unemployment[0] >1 \
+			|| argentina.unemployment[1] <0 || argentina.unemployment[1] >1 \
+			|| argentina.poverty[0] <0 || argentina.poverty[0] >1 \
+			|| argentina.poverty[1] <0 || argentina.poverty[1] >1 \
+			|| argentina.gdp_growth[0] <-1 || argentina.gdp_growth[1] <-1 \
+			|| argentina.inflation[0] <-1  || argentina.inflation[1] <-1){
+			cout << "Error reading economic data. Corrupted data base.\n"; return;
 		}
-		vector <Candidato> candi; candi.resize(argentina.cand_por_ano);
-		vector <float> resultados;	resultados.resize(argentina.cand_por_ano);
+		vector <Candidate> candi; candi.resize(argentina.cand_per_year);
+		vector <float> results;	results.resize(argentina.cand_per_year);
 		
 		for (int i = 0; i < argentina.cand_por_ano; ++i){
 		// Loads candidates data
-			Candidato aux;	
+			Candidate aux;	
 			
-			mycandidate >> candi[i].ano;
-			mycandidate >> candi[i].puntaje;
-			mycandidate >> candi[i].poder;
-			mycandidate >> candi[i].imagen;
-			mycandidate >> candi[i].encuestas;
-			mycandidate >> resultados[i];
+			mycandidate >> candi[i].year;
+			mycandidate >> candi[i].ideology;
+			mycandidate >> candi[i].power;
+			mycandidate >> candi[i].image;
+			mycandidate >> candi[i].polling;
+			mycandidate >> results[i];
 
-			if ( candi[i].ano != argentina.ano \
-				|| candi[i].puntaje <0 || candi[i].puntaje >1 \
-				|| (candi[i].poder !=0 && candi[i].poder != 1) \
-				|| candi[i].imagen <0 || candi[i].imagen >1  \
-				|| candi[i].encuestas <0 || candi[i].encuestas >1 \
-				|| resultados[i] <0 || resultados[i] >1 ){
-				cout << argentina.ano<<"Error. Base de datos corrupta.\n"; return;
+			if ( candi[i].year != argentina.year \
+				|| candi[i].ideology <0 || candi[i].ideology >1 \
+				|| (candi[i].power !=0 && candi[i].poder != 1) \
+				|| candi[i].power <0 || candi[i].power >1  \
+				|| candi[i].polling <0 || candi[i].polling >1 \
+				|| results[i] <0 || results[i] >1 ){
+				cout << argentina.ano<<"Error reading cadidates. Corrupted data base.\n"; return;
 			}
 		}
 
-		Eleccion aux(argentina, candi, resultados);
-		entrenamiento.push_back(aux); // Guarda en el set de entrenamieto la eleccion
+		Election aux(argentina, candi, results);
+		training.push_back(aux); // Guarda en el set de entrenamieto la eleccion
 		candi.clear();
 		std::getline(mycandidate, line);
 	}
@@ -153,7 +152,7 @@ void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fst
 
 
 
-void Expandir_data_set( vector< Eleccion > & entrenamiento){ 
+void DataAugmentation( vector< Election > & training){ 
 	//Data aumentation
 	float r,s;
 	std::random_device rd;
@@ -163,149 +162,147 @@ void Expandir_data_set( vector< Eleccion > & entrenamiento){
 	int T = entrenamiento.size();
 	
 	for (int j = 0; j < 5	; ++j){
-		Eleccion aux;
+		Election aux;
 		for (int i = 0; i < T; ++i){
 			r = distribution(generator);
 			s = distribution(generator);
-			aux = entrenamiento[i];
-			aux.country.pbi_crec[0] *= (1. + r);	aux.country.pbi_crec[1] *= (1. + s);
-			aux.country.desempleo[0] *= (1. - r/2);	aux.country.desempleo[1] *= (1. - s/2);
-			aux.country.pobreza[0] *= (1. - r/3);	aux.country.pobreza[1] *= (1. - s/3);
-			// Los nro de 1/2 y 1/3 surgen de correlaciones que muestran que por
-			// cada punto que crezca la economia el desempleo se reduce en 0.5 y la poblreza en 0.3
-			// y similar por cada punto de caída en el pbi
+			aux = training[i];
+			aux.country.gdp_growth[0] *= (1. + r);	aux.country.gdp_growth[1] *= (1. + s);
+			aux.country.unemployment[0] *= (1. - r/2);	aux.country.unemployment[1] *= (1. - s/2);
+			aux.country.poverty[0] *= (1. - r/3);	aux.country.poverty[1] *= (1. - s/3);
+			// Economic correlations show that  for each point in GDP growth
+			// poverty is reduce 0.3% and unemployment 0.5%
 			float total=0;
 			for (int k = 0; k < aux.candidates.size(); ++k){
-				if (aux.candidates[k].poder){
-					aux.candidates[k].encuestas *= (1. + r);
-					aux.candidates[k].imagen *= (1. + r); 
-					aux.resultados[k] *= (1. + r);
+				if (aux.candidates[k].power){
+					aux.candidates[k].polling *= (1. + r);
+					aux.candidates[k].image *= (1. + r); 
+					aux.results[k] *= (1. + r);
 				}
 				else{
-					aux.candidates[k].encuestas *= (1. - r);
-					aux.candidates[k].imagen *= (1. - r);
-					aux.resultados[k] *= (1. - r);			
+					aux.candidates[k].polling *= (1. - r);
+					aux.candidates[k].image *= (1. - r);
+					aux.results[k] *= (1. - r);			
 				}
-				total += aux.resultados[k];
+				total += aux.results[k];
 			}
 
 			for (int k = 0; k < aux.candidates.size(); ++k){
-				aux.resultados[k] /= total;
+				aux.results[k] /= total;
 			}
-			
-			entrenamiento.push_back(aux);
+			training.push_back(aux);
 		}
 	}
 }
 
 
-void Guardar_Eleccion(Eleccion elect, fstream & myresults){
+void SaveElection(Election elect, fstream & myresults){
 // Saves a simulated election's results to a .txt file
-	myresults << "Año	Desem	D_ant	Pobr	P_ant	Pbi_cre	PBI_ant	Inf	Inf_ant	Nro Cands \n";
+	myresults << "Year	Unemploy	Prev_unemp	Poverty	Prev_poverty	GDP_gro	Prev_GDP_gro	Inf	Prev_In	Num_Cands \n";
 	myresults << elect.country << endl << endl;
-	myresults << "Año	Punt	Poder	Imagen	Encues	Result \n";
-	for (int i = 0; i < elect.country.cand_por_ano; ++i){
-		myresults << elect.candidates[i] << "	" << elect.resultados[i] << endl;
+	myresults << "Year	Ideology	Poeer	Image	Polling	Result \n";
+	for (int i = 0; i < elect.country.cand_per_year; ++i){
+		myresults << elect.candidates[i] << "	" << elect.results[i] << endl;
 	}
 	myresults << endl << endl;
 }
 
 
-void Guardar_Error(ofstream & myfile, int i, float a, float b){
+void SaveError(ofstream & myfile, int i, float a, float b){
 	// Tracks error 
 	myfile << i << "	" << (a + b)/2. << "	" << endl;
 }
 
 
 
-Eleccion Leer_datos( ){
-	Eleccion elect;
+Election ReadData(){
+	Election elect;
 	// Uses console I/O to read a election data
-	cout << "Ingrese el año de la eleccion:" << endl;
-	cin >> elect.country.ano;
+	cout << "Input election year:" << endl;
+	cin >> elect.country.year;
 	// Loads economic data
-	cout << "Ingrese tasa de desempleo (normalizada a 1) el año de la eleccion:" << endl;
-	cin >> elect.country.desempleo[0];
-	while ( elect.country.desempleo[0]< 0 || elect.country.desempleo[0]> 1){
-		cout << "Valor incorrecto. Intente nuevamente." << endl;
-		cin >> elect.country.desempleo[0];
+	cout << "Enter election's year unemployment rate (normalized to 1):" << endl;
+	cin >> elect.country.unemployment[0];
+	while ( elect.country.unemployment[0]< 0 || elect.country.unemployment[0]> 1){
+		cout << "Impossible. Try again." << endl;
+		cin >> elect.country.unemployment[0];
 	}
-	cout << "Ingrese tasa de desempleo (normalizada a 1) el año anterior a la eleccion :" << endl;
+	cout << "Enter unemployment rate (normalized to 1) on the previous year:" << endl;
 	cin >> elect.country.desempleo[1];
-	while ( elect.country.desempleo[1]< 0 || elect.country.desempleo[1]> 1){
-		cout << "Valor incorrecto. Intente nuevamente." << endl;
-		cin >> elect.country.desempleo[1];
+	while ( elect.country.unemployment[1]< 0 || elect.country.unemployment[1]> 1){
+		cout << "Impossible. Try again." << endl;
+		cin >> elect.country.unemployment[1];
 	}
 	
-	cout << "Ingrese tasa de pobreza (normalizada a 1) el año de la eleccion:" << endl;
-	cin >> elect.country.pobreza[0];
-	while (  elect.country.pobreza[0]< 0 || elect.country.pobreza[0]> 1 ){
-		cout << "Valor incorrecto. Intente nuevamente." << endl;
-		cin >> elect.country.pobreza[0];
+	cout << "Enter election's year poverty rate (normalized to 1):" << endl;
+	cin >> elect.country.poverty[0];
+	while (  elect.country.poverty[0]< 0 || elect.country.poverty[0]> 1 ){
+		cout << "Impossible. Try again." << endl;
+		cin >> elect.country.poverty[0];
 	}
-	cout << "Ingrese tasa de pobreza (normalizada a 1) el año anterior a la eleccion :" << endl;
-	cin >> elect.country.pobreza[1];
-	while ( elect.country.pobreza[1]< 0 || elect.country.pobreza[1]> 1){
-		cout << "Valor incorrecto. Intente nuevamente." << endl;
-		cin >> elect.country.pobreza[1];
-	}
-	
-	cout << "Ingrese tasa de crecimiento del PBI (normalizada a 1) el año de la eleccion:" << endl;
-	cin >> elect.country.pbi_crec[0];
-	while ( elect.country.pbi_crec[0]< -1 ){
-		cout << "Valor incorrecto. Intente nuevamente." << endl;
-		cin >> elect.country.pbi_crec[0];
-	}
-	cout << "Ingrese tasa de crecimiento del PBI  (normalizada a 1) el año anterior a la eleccion :" << endl;
-	cin >> elect.country.pbi_crec[1];
-	while ( elect.country.pbi_crec[1]< -1 ){
-		cout << "Valor incorrecto. Intente nuevamente." << endl;
-		cin >> elect.country.pbi_crec[1];
+	cout << "Enter poverty rate (normalized to 1) on the previous year:" << endl;
+	cin >> elect.country.poverty[1];
+	while ( elect.country.poverty[1]< 0 || elect.country.poverty[1]> 1){
+		cout << "Impossible. Try again." << endl;
+		cin >> elect.country.poverty[1];
 	}
 	
-	cout << "Ingrese tasa de inflacion (normalizada a 1) el año de la eleccion:" << endl;
-	cin >> elect.country.inflac[0];
-	while ( elect.country.inflac[0]< -1 ){
-		cout << "Valor incorrecto. Intente nuevamente." << endl;
+	cout << "Enter election's year GDP growth rate (normalized to 1):" << endl;
+	cin >> elect.country.gdp_growth[0];
+	while ( elect.country.gdp_growth[0]< -1 ){
+		cout << "Impossible. Try again." << endl;
+		cin >> elect.country.gdp_growth[0];
+	}
+	cout << "Enter GDP growth rate (normalized to 1) on the previous year:" << endl;
+	cin >> elect.country.gdp_growth[1];
+	while ( elect.country.gdp_growth[1]< -1 ){
+		cout << "Impossible. Try again." << endl;
+		cin >> elect.country.gdp_growth[1];
+	}
+	
+	cout << "Enter election's year inflation rate (normalized to 1):" << endl;
+	cin >> elect.country.inflation[0];
+	while ( elect.country.inflation[0]< -1 ){
+		cout << "Impossible. Try again." << endl;
 		cin >> elect.country.inflac[0];
 	}
-	cout << "Ingrese tasa de inflacion  (normalizada a 1) el año anterior a la eleccion :" << endl;
-	cin >> elect.country.inflac[1];
-	while ( elect.country.inflac[1]< -1 ){
-		cout << "Valor incorrecto. Intente nuevamente." << endl;
-		cin >> elect.country.inflac[1];
+	cout << "Enter inflation rate (normalized to 1) on the previous year:" << endl;
+	cin >> elect.country.inflation[1];
+	while ( elect.country.inflation[1]< -1 ){
+		cout << "Impossible. Try again." << endl;
+		cin >> elect.country.inflation[1];
 	}
 	
-	cout << "Por favor, ingrese el número de candidatos en la elección:" << endl;
+	cout << "Please, enter the number of candidates competing on this election:" << endl;
 	cin >> elect.country.cand_por_ano;
 	
-	elect.candidates.resize( elect.country.cand_por_ano );
-	elect.resultados.resize (elect.country.cand_por_ano);
-	for (int i = 0; i < elect.country.cand_por_ano; ++i){	
+	elect.candidates.resize( elect.country.cand_per_year );
+	elect.resultados.resize (elect.country.cand_per_year);
+	for (int i = 0; i < elect.country.cand_per_year; ++i){	
 		//Load each candidate's data
-		elect.candidates[i].ano = elect.country.ano;
-		cout << "Ingrese el puntaje ideologico del candidato (0 izquierda, 1 derecha):" << endl;
-		cin >> elect.candidates[i].puntaje;
-		while ( elect.candidates[i].puntaje < 0 || elect.candidates[i].puntaje>1 ){
-			cout << "Valor incorrecto. Intente nuevamente." << endl;
-			cin >> elect.candidates[i].puntaje;
+		elect.candidates[i].year = elect.country.year;
+		cout << "Enter the candidates ideological score (0 left, 1 right):" << endl;
+		cin >> elect.candidates[i].ideology;
+		while ( elect.candidates[i].ideology < 0 || elect.candidates[i].ideology>1 ){
+			cout << "Impossible. Try again." << endl;
+			cin >> elect.candidates[i].ideology;
 		}
 	
-		cout << "¿El candidato forma parte del partido de gobierno? 1 SÍ, 0 NO:" << endl;
-		cin >> elect.candidates[i].poder;
+		cout << "Is the candidate's party in power? 1 Yes, 0 NO:" << endl;
+		cin >> elect.candidates[i].power;
 	
-		cout << "¿Cual es su imágen positiva + regular?" << endl;
-		cin >> elect.candidates[i].imagen;
-		while ( elect.candidates[i].imagen < 0 || elect.candidates[i].imagen > 1 ){
-			cout << "Valor incorrecto. Intente nuevamente." << endl;
-			cin >> elect.candidates[i].imagen;
+		cout << "What is the candidate's favourability rating?" << endl;
+		cin >> elect.candidates[i].image;
+		while ( elect.candidates[i].image < 0 || elect.candidates[i].image > 1 ){
+			cout << "Impossible. Try again." << endl;
+			cin >> elect.candidates[i].image;
 		}
 	
-		cout << "¿Cual es su intención de voto normalizada a 1?" << endl;
-		cin >> elect.candidates[i].encuestas;
-		while ( elect.candidates[i].encuestas < 0 || elect.candidates[i].encuestas> 1 ){
-			cout << "Valor incorrecto. Intente nuevamente." << endl;
-			cin >> elect.candidates[i].encuestas;
+		cout << "Enter the candidates polling numbers (normalized to 1):" << endl;
+		cin >> elect.candidates[i].polling;
+		while ( elect.candidates[i].polling < 0 || elect.candidates[i].polling> 1 ){
+			cout << "Impossible. Try again." << endl;
+			cin >> elect.candidates[i].polling;
 		}
 	}
 	return elect;
