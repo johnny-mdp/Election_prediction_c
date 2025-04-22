@@ -7,17 +7,15 @@
 using namespace std;
 using namespace std::chrono;
 
-struct Candidato
-{
-	int ano;	// Un candidato compite un dado año
-	float puntaje;	// Un candidato tiene una ideologia
-	bool poder;	// Un candidato viene de un partido en el poder o no
-	float encuestas;	// Su promedio en encuestas
-	float imagen; // Su imagen positiva+regular
+struct Candidato{
+	int ano;	// A candidate compites a given year
+	float puntaje;	// A candidate a given ideology
+	bool poder;	// A candidate's party is or is not in power
+	float encuestas;// Candidate's polling average
+	float imagen; // Cadidate's  possitive+regular favourability rating
 
 	Candidato(){}
-	Candidato (int a, float pun, int pod, float ima, float encu)
-	{
+	Candidato (int a, float pun, int pod, float ima, float encu){
 		ano = a;
 		puntaje = pun;
 		poder = pod;
@@ -26,8 +24,8 @@ struct Candidato
 	}
 };
 
-ostream &operator<<(ostream &os, Candidato cand)
-{//Overlodeo << para poder escribir un Candidato simplemente poniendo en nombre de la variable de tipo Candidato
+ostream &operator<<(ostream &os, Candidato cand){
+	//Overloding  << to write a Candidate variable
 	os << cand.ano << "	" << cand.puntaje << "	" << cand.poder << "	"\
 		<< cand.imagen << "	" << cand.encuestas;
 	return os;
@@ -35,18 +33,17 @@ ostream &operator<<(ostream &os, Candidato cand)
 
 
 
-struct Pais
-{	// Las variables elegidas son algunas de las más importantes de la economía
+struct Pais{
+	// Country's economic variables
 	int ano;	
 	float desempleo[2];
 	float pobreza[2];
 	float pbi_crec[2];
 	float inflac[2];
-	int cand_por_ano; // Para saber cuantos candidatos hay en una eleccion
+	int cand_por_ano; // Number of candidates per election
 
 	Pais(){}
-	Pais(int a, float des, float des_ant, float pob, float pob_ant, float gdp_crec,float gdp_crec_ant, float infl, float infl_ant)
-	{
+	Pais(int a, float des, float des_ant, float pob, float pob_ant, float gdp_crec,float gdp_crec_ant, float infl, float infl_ant){
 		ano = a;
 		desempleo[0] = des;	desempleo[1] = des_ant;
 		pobreza[0] = pob;	pobreza[1] = pob_ant ;
@@ -55,8 +52,8 @@ struct Pais
 	}
 };
 
-ostream &operator<<(ostream &os, Pais country)
-{	//Overlodeo << para poder escribir un pais simplemente poniendo en nombre de la variable de tipo pais
+ostream &operator<<(ostream &os, Pais country){	
+	//Overloding << to write the country's economic state
 	os << country.ano << "	" << country.desempleo[0]  << "	" << country.desempleo[1] << "	" \
 		<< country.pobreza[0] << "	" << country.pobreza[1] << "	"\
 		<< country.pbi_crec[0] << "	" << country.pbi_crec[1] << "	"\
@@ -66,40 +63,36 @@ ostream &operator<<(ostream &os, Pais country)
 
 
 
-struct Eleccion
-{
-	// Una eleccion tiene candidaton, un resultado y se da en un contexto economico.
-	// De ahí los miembro de esta estructura
+struct Eleccion{
+	// An election has a set of candidates and a economic context
 	vector <Candidato> candidates;
 	vector <float> resultados;
 	Pais country;
 
 	Eleccion(){}
-	Eleccion( Pais argentina, vector<Candidato> candi, vector <float> results)
-	{
+	Eleccion( Pais argentina, vector<Candidato> candi, vector <float> results){
 		country = argentina;
 		candidates = candi;
 		resultados = results;
 	}
 };
 
-void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fstream  & mycountry ); // Lee el set de datos de entrenamiento de archivos .txt
-void Expandir_data_set( vector <Eleccion> & entrenamiento );// Generar elecciones nuevas variado levemente (al azar) los parametros de elecciones reales
-void Guardar_Eleccion(Eleccion elect, fstream & myresults); // Guarda en un archivo .txt los resultados de una simulacion
-void Guardar_Error(ofstream & myfile, int i, float a, float b);	// Guarda en un archivo .txt el error al finald e cada iteración
-void Leer_datos( Pais & argentina, vector<Candidato> & candis); // Lee por pantalla los datos de una elección
+void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fstream  & mycountry ); // Load the training data set
+void Expandir_data_set( vector <Eleccion> & entrenamiento );// Data aumentation
+void Guardar_Eleccion(Eleccion elect, fstream & myresults); // Saves the results of a simulated election to a txt file
+void Guardar_Error(ofstream & myfile, int i, float a, float b);	// Tracks at each iteration the error and saves it to a .txt file
+void Leer_datos( Pais & argentina, vector<Candidato> & candis); // Uses console I/O to read an election input data
 
 
 
-void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fstream & mycountry )
-{
+void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fstream & mycountry ){
 	Pais argentina;
 	std::string line;
 	std::getline(mycountry, line);
 	std::getline(mycandidate, line);
 
-	while (!mycandidate.eof() && !mycountry.eof())
-	{// Primero lee del archivo con los datos de la economia cual era el estado del país y el nro de candidatos
+	while (!mycandidate.eof() && !mycountry.eof()){
+	// First loads economic data and number of candidates
 		mycountry >> argentina.ano;	
 
 		mycountry >> argentina.desempleo[0];
@@ -124,15 +117,14 @@ void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fst
 			|| argentina.pobreza[1] <0 || argentina.pobreza[1] >1 \
 			|| argentina.pbi_crec[0] <-1 || argentina.pbi_crec[1] <-1 \
 			|| argentina.inflac[0] <-1  || argentina.inflac[1] <-1 \
-			|| argentina.cand_por_ano <0)
-		{
+			|| argentina.cand_por_ano <0){
 			cout << "Error. Base de datos corrupta.\n"; return;
 		}
 		vector <Candidato> candi; candi.resize(argentina.cand_por_ano);
 		vector <float> resultados;	resultados.resize(argentina.cand_por_ano);
 		
-		for (int i = 0; i < argentina.cand_por_ano; ++i)
-		{// Lee los parametros de cada candidato del archivo adecuado
+		for (int i = 0; i < argentina.cand_por_ano; ++i){
+		// Loads candidates data
 			Candidato aux;	
 			
 			mycandidate >> candi[i].ano;
@@ -147,8 +139,7 @@ void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fst
 				|| (candi[i].poder !=0 && candi[i].poder != 1) \
 				|| candi[i].imagen <0 || candi[i].imagen >1  \
 				|| candi[i].encuestas <0 || candi[i].encuestas >1 \
-				|| resultados[i] <0 || resultados[i] >1 )
-			{
+				|| resultados[i] <0 || resultados[i] >1 ){
 				cout << argentina.ano<<"Error. Base de datos corrupta.\n"; return;
 			}
 		}
@@ -162,8 +153,8 @@ void Cargar_datos( vector <Eleccion> & entrenamiento, fstream & mycandidate, fst
 
 
 
-void Expandir_data_set( vector< Eleccion > & entrenamiento)
-{ // Generan nuevas elecciones variando (al azar) los parametros de elecciones reales
+void Expandir_data_set( vector< Eleccion > & entrenamiento){ 
+	//Data aumentation
 	float r,s;
 	std::random_device rd;
 	std::default_random_engine generator;
@@ -171,11 +162,9 @@ void Expandir_data_set( vector< Eleccion > & entrenamiento)
 	std::normal_distribution<double> distribution(0,0.1);
 	int T = entrenamiento.size();
 	
-	for (int j = 0; j < 5	; ++j)
-	{
+	for (int j = 0; j < 5	; ++j){
 		Eleccion aux;
-		for (int i = 0; i < T; ++i)
-		{
+		for (int i = 0; i < T; ++i){
 			r = distribution(generator);
 			s = distribution(generator);
 			aux = entrenamiento[i];
@@ -186,16 +175,13 @@ void Expandir_data_set( vector< Eleccion > & entrenamiento)
 			// cada punto que crezca la economia el desempleo se reduce en 0.5 y la poblreza en 0.3
 			// y similar por cada punto de caída en el pbi
 			float total=0;
-			for (int k = 0; k < aux.candidates.size(); ++k)
-			{
-				if (aux.candidates[k].poder)
-				{
+			for (int k = 0; k < aux.candidates.size(); ++k){
+				if (aux.candidates[k].poder){
 					aux.candidates[k].encuestas *= (1. + r);
 					aux.candidates[k].imagen *= (1. + r); 
 					aux.resultados[k] *= (1. + r);
 				}
-				else
-				{
+				else{
 					aux.candidates[k].encuestas *= (1. - r);
 					aux.candidates[k].imagen *= (1. - r);
 					aux.resultados[k] *= (1. - r);			
@@ -203,49 +189,41 @@ void Expandir_data_set( vector< Eleccion > & entrenamiento)
 				total += aux.resultados[k];
 			}
 
-			for (int k = 0; k < aux.candidates.size(); ++k)
-			{
+			for (int k = 0; k < aux.candidates.size(); ++k){
 				aux.resultados[k] /= total;
 			}
 			
 			entrenamiento.push_back(aux);
 		}
-
-		
 	}
-
 }
 
 
-void Guardar_Eleccion(Eleccion elect, fstream & myresults)
-{
-// Guarda los resultados de la simulacion en un archivo .txt
+void Guardar_Eleccion(Eleccion elect, fstream & myresults){
+// Saves a simulated election's results to a .txt file
 	myresults << "Año	Desem	D_ant	Pobr	P_ant	Pbi_cre	PBI_ant	Inf	Inf_ant	Nro Cands \n";
 	myresults << elect.country << endl << endl;
 	myresults << "Año	Punt	Poder	Imagen	Encues	Result \n";
-	for (int i = 0; i < elect.country.cand_por_ano; ++i)
-	{
+	for (int i = 0; i < elect.country.cand_por_ano; ++i){
 		myresults << elect.candidates[i] << "	" << elect.resultados[i] << endl;
 	}
-
 	myresults << endl << endl;
 }
 
 
-void Guardar_Error(ofstream & myfile, int i, float a, float b)
-{
-	// Guarda el error medio de los padres de cada generación en un archivo .txt
+void Guardar_Error(ofstream & myfile, int i, float a, float b){
+	// Tracks error 
 	myfile << i << "	" << (a + b)/2. << "	" << endl;
 }
 
 
 
-Eleccion Leer_datos( )
-{
+Eleccion Leer_datos( ){
 	Eleccion elect;
-	// Ingresa los datos de la economía del pais y nro decandidatos
+	// Uses console I/O to read a election data
 	cout << "Ingrese el año de la eleccion:" << endl;
 	cin >> elect.country.ano;
+	// Loads economic data
 	cout << "Ingrese tasa de desempleo (normalizada a 1) el año de la eleccion:" << endl;
 	cin >> elect.country.desempleo[0];
 	while ( elect.country.desempleo[0]< 0 || elect.country.desempleo[0]> 1){
@@ -303,8 +281,8 @@ Eleccion Leer_datos( )
 	
 	elect.candidates.resize( elect.country.cand_por_ano );
 	elect.resultados.resize (elect.country.cand_por_ano);
-	for (int i = 0; i < elect.country.cand_por_ano; ++i)
-	{	//Ingresa los datos de cada candidato
+	for (int i = 0; i < elect.country.cand_por_ano; ++i){	
+		//Load each candidate's data
 		elect.candidates[i].ano = elect.country.ano;
 		cout << "Ingrese el puntaje ideologico del candidato (0 izquierda, 1 derecha):" << endl;
 		cin >> elect.candidates[i].puntaje;
@@ -330,7 +308,6 @@ Eleccion Leer_datos( )
 			cin >> elect.candidates[i].encuestas;
 		}
 	}
-
 	return elect;
 }
 
