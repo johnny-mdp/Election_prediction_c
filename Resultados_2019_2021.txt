@@ -1,0 +1,20 @@
+Año	Desem	D_ant	Pobr	P_ant	Pbi_cre	PBI_ant	Inf	Inf_ant	Nro Cands 
+2019	0.098	0.092	0.36	0.33	-0.021	-0.024	0.53	0.47	4
+
+Año	Punt	Poder	Imagen	Encues	Result 		Actual Result
+2019	0.3	0	0.5	0.53	0.491624		0.483
+2019	0.6	1	0.4	0.35	0.357364		0.402
+2019	0.5	0	0.4	0.07	0.0977851	0.065
+2019	0.2	0	0.2	0.02	0.0532271	0.023
+
+
+Año	Desem	D_ant	Pobr	P_ant	Pbi_cre	PBI_ant	Inf	Inf_ant	Nro Cands 
+2021	0.2	0.13	0.55	0.41	0.05	-0.12	0.29	0.55	4
+
+Año	Punt	Poder	Imagen	Encues	Result 
+2021	0.3	1	0.3	0.33	0.439882		0.421
+2021	0.6	0	0.5	0.33	0.393531		0.34
+2021	0.8	0	0.35	0.11	0.0906774	0.07
+2021	0.1	0	0.2	0.03	0.0759089	0.05
+
+
